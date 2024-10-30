@@ -42,6 +42,7 @@ Install my-project with npm
 **Requirements**
 - IDE Android Studio.
 - version Android Studio Koala Feature Drop | 2024.1.2
+- minSdk = 26
 
 ## About Me
 
