@@ -1,7 +1,8 @@
+MySIBI is an Indonesian sign language detection application using deep learning object detection models integrated into android using kotlin and jetpack compose. this application can detect 15 sign words. this application can be applied in slb or people with normal hearing can use this application. this application is for my thesis final project for the requirements to pass. 
 
 # Tugas Akhir Skripsi
 
-**Judul "Aplikasi Deteksi Sistem Isyarat Bahasa Indonesia (SIBI) Berbasis Android menggunakan Metode Rapid Application Development**
+**Judul "Aplikasi Deteksi Sistem Isyarat Bahasa Indonesia (SIBI) Berbasis Android menggunakan Metode Rapid Application Development" **
 
 ## Features
 
@@ -20,16 +21,27 @@ Install my-project with npm
     
 ## How to Run in device ?
 
-- Install aplikasi Izinkan akses aplikasi to install
--  Izinkan akses kamera
--  Aplikasi berhasil dijalankan
--  Jika hp dalam mode gelap, ubah ke mode terang
+- Install apps Allow app access to install
+- Allow camera access
+- App runs successfully
+- If the phone is in dark mode, change to light mode
   
+
 ## Tech Stack
 
 **Client:** Kotlin, Jetpack Compose
 
 **Model:** Object Detection Deep Learning
+
+**Library Used:**
+- Jetpack Compose for UI
+- Material3
+- CameraX for Camera and Image Analysis Use case
+
+## Build Project
+**Requirements**
+- IDE Android Studio.
+- version Android Studio Koala Feature Drop | 2024.1.2
 
 ## About Me
 
