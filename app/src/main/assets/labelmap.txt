@@ -1,0 +1,182 @@
+A
+E
+I
+U
+O
+baik
+bangku
+bel
+dia
+meja
+pramuka
+sakit
+saya
+teman
+tugas
+
+
+
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.Matrix
+import android.util.Size
+import androidx.camera.core.*
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import org.tensorflow.lite.Interpreter
+import org.tensorflow.lite.support.common.FileUtil
+import org.tensorflow.lite.support.image.ImageProcessor
+import org.tensorflow.lite.support.image.TensorImage
+import org.tensorflow.lite.support.image.ops.ResizeOp
+import java.util.concurrent.Executors
+
+@Composable
+fun DeteksiIsyaratScreen() {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
+
+    var detectionResults by remember { mutableStateOf(emptyList<DetectionResult>()) }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        CameraPreview(
+            context = context,
+            lifecycleOwner = lifecycleOwner,
+            cameraProviderFuture = cameraProviderFuture
+        ) { imageProxy ->
+            // Perform object detection on the image
+            val results = detectObjects(context, imageProxy)
+            detectionResults = results
+        }
+
+        // Draw bounding boxes and labels
+        DetectionOverlay(detectionResults)
+    }
+}
+
+@Composable
+fun CameraPreview(
+    context: Context,
+    lifecycleOwner: LifecycleOwner,
+    cameraProviderFuture: ListenableFuture<ProcessCameraProvider>,
+    onImageCaptured: (ImageProxy) -> Unit
+) {
+    AndroidView(
+        factory = { ctx ->
+            val previewView = PreviewView(ctx)
+            val executor = ContextCompat.getMainExecutor(ctx)
+            cameraProviderFuture.addListener({
+                val cameraProvider = cameraProviderFuture.get()
+                val preview = Preview.Builder().build().also {
+                    it.setSurfaceProvider(previewView.surfaceProvider)
+                }
+
+                val imageAnalyzer = ImageAnalysis.Builder()
+                    .setTargetResolution(Size(640, 480))
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .build()
+                    .also {
+                        it.setAnalyzer(executor, { imageProxy ->
+                            onImageCaptured(imageProxy)
+                            imageProxy.close()
+                        })
+                    }
+
+                val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+                cameraProvider.unbindAll()
+                cameraProvider.bindToLifecycle(
+                    lifecycleOwner,
+                    cameraSelector,
+                    preview,
+                    imageAnalyzer
+                )
+            }, executor)
+            previewView
+        },
+        modifier = Modifier.fillMaxSize()
+    )
+}
+
+fun detectObjects(context: Context, imageProxy: ImageProxy): List<DetectionResult> {
+    val tfLiteInterpreter = Interpreter(FileUtil.loadMappedFile(context, "MetadataSibi.tflite"))
+    val imageProcessor = ImageProcessor.Builder()
+        .add(ResizeOp(300, 300, ResizeOp.ResizeMethod.BILINEAR))
+        .build()
+
+    val tensorImage = TensorImage.fromBitmap(imageProxy.toBitmap())
+    val processedImage = imageProcessor.process(tensorImage)
+
+    val inputArray = Array(1) { processedImage.buffer }
+    val outputMap = mutableMapOf<Int, Array<FloatArray>>()
+
+    // Set up output arrays based on your model's output
+    outputMap[0] = Array(1) { FloatArray(10) } // Adjust size based on your model
+    outputMap[1] = Array(1) { FloatArray(10) }
+    outputMap[2] = Array(1) { FloatArray(10) }
+    outputMap[3] = Array(1) { FloatArray(10) }
+
+    tfLiteInterpreter.runForMultipleInputsOutputs(inputArray, outputMap)
+
+    // Process the output to get detection results
+    // This part depends on your model's output format
+    val detectionResults = processModelOutput(outputMap)
+
+    return detectionResults
+}
+
+@Composable
+fun DetectionOverlay(detectionResults: List<DetectionResult>) {
+    Canvas(modifier = Modifier.fillMaxSize()) {
+        detectionResults.forEach { result ->
+            drawDetectionBox(result)
+        }
+    }
+}
+
+fun DrawScope.drawDetectionBox(result: DetectionResult) {
+    // Draw bounding box and label
+    // Implement based on your DetectionResult structure
+}
+
+data class DetectionResult(
+    val label: String,
+    val confidence: Float,
+    val boundingBox: Rect
+)
+
+fun ImageProxy.toBitmap(): Bitmap {
+    val yBuffer = planes[0].buffer
+    val uBuffer = planes[1].buffer
+    val vBuffer = planes[2].buffer
+
+    val ySize = yBuffer.remaining()
+    val uSize = uBuffer.remaining()
+    val vSize = vBuffer.remaining()
+
+    val nv21 = ByteArray(ySize + uSize + vSize)
+
+    yBuffer.get(nv21, 0, ySize)
+    vBuffer.get(nv21, ySize, vSize)
+    uBuffer.get(nv21, ySize + vSize, uSize)
+
+    val yuvImage = YuvImage(nv21, ImageFormat.NV21, width, height, null)
+    val out = ByteArrayOutputStream()
+    yuvImage.compressToJpeg(Rect(0, 0, width, height), 100, out)
+    val imageBytes = out.toByteArray()
+    return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+}
