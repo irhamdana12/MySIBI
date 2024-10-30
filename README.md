@@ -2,7 +2,7 @@ MySIBI is an Indonesian sign language detection application using deep learning 
 
 # Tugas Akhir Skripsi
 
-**Judul "Aplikasi Deteksi Sistem Isyarat Bahasa Indonesia (SIBI) Berbasis Android menggunakan Metode Rapid Application Development" **
+**Judul "Aplikasi Deteksi Sistem Isyarat Bahasa Indonesia (SIBI) Berbasis Android menggunakan Metode Rapid Application Development"**
 
 ## Features
 
