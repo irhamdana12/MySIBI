@@ -7,7 +7,9 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 
 import androidx.compose.material3.*
 import androidx.compose.material3.AlertDialogDefaults.containerColor
@@ -34,7 +36,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.preference.contains
 import kotlin.text.contains
-
 @Composable
 fun DaftarKataCard(navController: NavHostController) {
     Card(
@@ -155,7 +156,6 @@ fun DaftarKataScreen(navController: NavHostController) {
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-
         // Button to trigger the image generation
         Button(
             onClick = { generate() },
@@ -195,6 +195,7 @@ fun ResultScreen(selectedWords: List<String>) {
 
     Column(
         modifier = Modifier
+            .verticalScroll(rememberScrollState())
             .fillMaxSize()
             .padding(16.dp)
     ) {
